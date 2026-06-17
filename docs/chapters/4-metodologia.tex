@@ -1,0 +1,4 @@
+\section{Metodologia}
+
+[DIRECIONAMENTO] Descrever a arquitetura do FIS proposto. Definir as variáveis de entrada fuzzy: Desvio do Status Code (domínio [0,1] — quão distante do esperado), Tempo de Resposta (domínio [0, 5000ms] — normal, lento, timeout), Tamanho do Payload (domínio $[0, \infty]$ — esperado, grande, vazio). Definir a variável de saída: Criticidade da Anomalia (domínio [0,1] — baixa, média, alta). Apresentar as funções de pertinência de cada variável (triangulares/trapezoidais) e justificar as escolhas. Listar a base de regras SE-ENTÃO (ex: SE status é "erro grave" E tempo é "lento" ENTÃO criticidade é "alta"). Descrever o ambiente de experimentação: biblioteca scikit-fuzzy (Python), consumo dos arquivos results.json gerados pelo fuzzer, critérios de validação (comparação com analisador binário original).
+\endinput
