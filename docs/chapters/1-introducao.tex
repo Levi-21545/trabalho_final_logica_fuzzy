@@ -1,4 +1,40 @@
 \section{Introdução}
 
-[DIRECIONAMENTO] Contextualizar a importância das APIs REST e o desafio de validar robustez além do happy path. Explicar que o TCC do aluno (Gomes, 2026) já implementa um fuzzer guiado por contrato OpenAPI, mas seu analisador atual classifica erros de forma binária (status code). Apresentar a lacuna: falta de um oráculo capaz de capturar anomalias sutis — como um 2xx com corpo inconsistente ou um 4xx com latência anormal. Formular a pergunta de pesquisa: "Como a lógica fuzzy pode melhorar a precisão na classificação de anomalias em relação a abordagens puramente booleanas?". Definir o objetivo geral (implementar e avaliar um FIS) e os específicos (definir variáveis, criar regras, validar com dados reais). Justificar a escolha da lógica fuzzy: a anomalia não é binária, há graus de criticidade, e a fuzzy modela essa nebulosidade naturalmente. Delimitar o escopo: o trabalho foca no módulo analisador (inteligência), tratando o fuzzer como provedor de dados. Finalizar com uma frase sobre a estrutura do artigo.
-\endinput
+As APIs REST consolidaram-se como o padrão dominante para a integração de sistemas modernos, servindo de base para microsserviços, aplicações móveis e ecossistemas B2B. Para garantir a confiabilidade dessas interfaces, ferramentas de \textit{fuzzing} guiado por contrato, como o protocolo OpenAPI, automatizam a descoberta de falhas de robustez ao explorar sistematicamente o espaço de entrada das aplicações. Entretanto, um desafio central nesse processo é a definição do \textbf{oráculo de teste}: a capacidade de determinar se uma resposta inesperada do servidor constitui uma falha real ou um comportamento aceitável sob estresse.
+
+Abordagens \textbf{binárias} tradicionais, baseadas puramente em lógica booleana (passa/falha), mostram-se insuficientes para lidar com fenômenos contínuos e incertos, como variações na latência de rede, \textit{payloads} limítrofes e erros intermitentes. Tais métodos frequentemente geram uma alta taxa de falsos positivos ao rotular qualquer desvio do contrato como uma falha crítica. Neste contexto, a \textbf{Lógica Fuzzy}, introduzida por Zadeh (1965), oferece um arcabouço matemático robusto para lidar com a incerteza e a gradação, permitindo uma classificação mais refinada e realista das anomalias detectadas.
+
+\subsection{Problema de Pesquisa}
+
+Um contrato OpenAPI especifica formalmente os códigos de \textit{status} e os esquemas de resposta esperados para cada \textit{endpoint}. Durante a execução de testes de \textit{fuzzing}, a API pode retornar respostas que desviam do contrato de formas sutis, como códigos 400 não documentados, respostas 200 que violam o esquema estrutural, ou erros 500 intermitentes acompanhados de tempos de resposta anômalos. Classificadores booleanos rígidos tendem a agrupar todas essas ocorrências sob um mesmo rótulo de ``falha'', o que dificulta a priorização de correções por parte das equipes de desenvolvimento. O problema reside, portanto, em \textbf{como ranquear essas anomalias por sua criticidade real}, distinguindo de forma inteligente entre um erro de validação esperado e uma falha grave, como vazamento de dados ou colapso do servidor.
+
+\subsection{Pergunta de Pesquisa}
+
+A partir do problema exposto, formula-se a seguinte questão: \textit{``O uso de um \textbf{Sistema de Inferência Fuzzy (FIS)}, combinando as variáveis de desvio de código de \textit{status}, tempo de resposta e variação do tamanho do \textit{payload}, permite classificar anomalias de robustez em APIs REST com maior precisão e granularidade do que abordagens puramente booleanas?''}
+
+\subsection{Objetivos}
+
+\subsubsection*{Objetivo Geral}
+Implementar um \textbf{Sistema de Inferência Fuzzy} para classificar as respostas de APIs REST em níveis de criticidade (\textit{LOW}, \textit{MEDIUM}, \textit{HIGH}), baseando-se em múltiplas variáveis difusas capturadas durante o \textit{fuzzing}.
+
+\subsubsection*{Objetivos Específicos}
+\begin{itemize}
+    \item Definir e implementar funções de pertinência para as três variáveis de entrada: desvio de \textit{status} (\texttt{status\_deviation}), tempo de resposta (\texttt{response\_time}) e razão de \textit{payload} (\texttt{payload\_ratio}).
+    \item Codificar \textbf{regras de inferência} do tipo SE-ENTÃO que traduzam o conhecimento heurístico sobre anomalias de software em decisões automatizadas.
+    \item Integrar o \textbf{motor fuzzy} (\textit{Fuzzy Engine}) ao analisador do \textit{OpenAPI Contract Fuzzer} para processar resultados em tempo real.
+    \item Validar a eficácia do sistema contra uma API vulnerável de referência (crAPI), documentando a distribuição e a precisão das severidades encontradas.
+\end{itemize}
+
+\subsection{Justificativa e Motivação}
+
+A justificativa para a aplicação de Lógica Fuzzy neste projeto reside na natureza inerentemente ``nebulosa'' das métricas de desempenho e comportamento de servidores sob estresse. Métricas como tempo de resposta não possuem fronteiras rígidas; o que é considerado ``lento'' em um cenário de carga pode ser ``aceitável'' em outro. Ao fornecer um \textbf{score de criticidade contínuo} (0.0 a 1.0) em vez de um rótulo booleano, a ferramenta oferece informações muito mais ricas para que equipes de DevOps e segurança possam priorizar correções de forma eficiente.
+
+Além disso, a solução é projetada para ser \textbf{leve}, permitindo sua execução em pipelines de Integração Contínua (CI/CD) sem adicionar um \textit{overhead} computacional significativo. A escolha da biblioteca \textit{scikit-fuzzy} para a implementação garante que o experimento seja não apenas reprodutível, mas também facilmente extensível para novos cenários de teste.
+
+\subsection{Delimitação do Escopo}
+
+Este trabalho delimita-se à \textbf{camada de inteligência} do processo de \textit{fuzzing} --- especificamente, o analisador fuzzy responsável por classificar as respostas obtidas. O \textit{OpenAPI Contract Fuzzer}, responsável pela geração de \textit{payloads} mutantes e execução das requisições, é utilizado como provedor de dados, não sendo alvo de modificações ou melhorias neste estudo. Não há mutação adaptativa realimentada pelo FIS (\textit{feedback loop}) --- o sistema é puramente classificatório. A validação experimental concentra-se em uma única API-alvo (crAPI) com aproximadamente 60 \textit{endpoints}, o que limita a generalização dos resultados para outros contextos.
+
+\subsection{Estrutura do Trabalho}
+
+Este artigo está organizado em seis seções principais além desta introdução. A Seção 2 apresenta a fundamentação teórica sobre Lógica Fuzzy, detalhando conceitos de conjuntos difusos, funções de pertinência e o modelo de inferência Mamdani. A Seção 3 discute trabalhos relacionados, comparando esta abordagem com ferramentas de teste de API como \textit{Schemathesis} e \textit{Dredd}. A Seção 4 detalha a metodologia, descrevendo a arquitetura do FIS, as variáveis de entrada e as 11 regras de inferência implementadas. A Seção 5 apresenta e discute os resultados obtidos nos testes contra a \textit{crAPI}, incluindo a distribuição de severidades e a análise de casos representativos. Por fim, a Seção 6 traz as conclusões do estudo, respondendo à pergunta de pesquisa e sugerindo direções para trabalhos futuros.

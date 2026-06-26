@@ -1,4 +1,47 @@
 \section{Fundamentação Teórica}
 
-[DIRECIONAMENTO] Explicar os conceitos fundamentais de lógica fuzzy: conjunto fuzzy (generalização de conjunto clássico com graus de pertinência), funções de pertinência (trapezoidal, triangular, gaussiana), fuzzificação (mapeamento de valores crisp para graus de pertinência). Descrever o Sistema de Inferência Fuzzy (FIS) modelo Mandani: base de regras (implicações SE-ENTÃO), motor de inferência (operadores min/max), desfuzzificação (centroide). Relacionar cada conceito com o problema do trabalho — por exemplo, "tempo de resposta alto" como conjunto fuzzy com função trapezoidal. Incluir equações formais das funções de pertinência usadas e uma figura ilustrativa (ex: conjunto fuzzy para variável "Criticidade").
-\endinput
+A \textbf{Lógica Fuzzy} (ou Lógica Difusa) foi introduzida por Lotfi A. Zadeh em 1965 como uma extensão da lógica clássica (booleana) para lidar com o conceito de verdade parcial. Enquanto na lógica tradicional um elemento pertence ou não pertence a um conjunto (0 ou 1), a lógica fuzzy permite que elementos possuam \textbf{graus de pertinência} variando continuamente no intervalo unitário. Essa característica a torna ideal para modelar sistemas onde as fronteiras entre categorias são imprecisas ou ``nebulosas'', como a distinção entre um tempo de resposta ``normal'' e ``lento'' em uma rede.
+
+\subsection{Conjuntos Difusos e Funções de Pertinência}
+
+Diferente da lógica binária, um \textbf{conjunto difuso} $A$ em um universo de discurso $X$ é definido por uma \textbf{função de pertinência} $\mu_A: X \to [0,1]$, que mapeia cada elemento $x$ a um valor que indica o quanto ele pertence àquele conjunto. As funções de pertinência podem assumir diversas formas geométricas dependendo da natureza do dado:
+
+\begin{itemize}
+    \item \textbf{Função Triangular} (\texttt{trimf}): Definida por três parâmetros $[a,b,c]$, onde o valor de pertinência cresce linearmente de $a$ até o pico em $b$, e decresce até $c$. É utilizada para representar valores com um ponto central de máxima precisão.
+    \item \textbf{Função Trapezoidal} (\texttt{trapmf}): Definida por quatro parâmetros $[a,b,c,d]$, possuindo um platô de pertinência máxima entre os pontos $b$ e $c$. É útil para representar intervalos de valores que são considerados plenamente membros do conjunto.
+\end{itemize}
+
+No projeto desenvolvido, estas funções são implementadas via biblioteca \textit{scikit-fuzzy} para caracterizar as variáveis de entrada, como o desvio de contrato e a latência.
+
+\subsection{Fuzzificação}
+
+A \textbf{fuzzificação} é a etapa inicial do \textbf{Sistema de Inferência Fuzzy (FIS)}, na qual valores numéricos precisos (\textit{crisp}) extraídos do mundo real --- como um tempo de resposta de 300~ms --- são convertidos em graus de pertinência nos conjuntos difusos definidos. Por exemplo, um tempo de resposta pode ser mapeado simultaneamente como ``0.75 de pertinência no conjunto \textit{normal}'' e ``0.25 de pertinência no conjunto \textit{lento}'', permitindo que o sistema processe a transição gradual entre esses estados em vez de uma quebra abrupta.
+
+\subsection{Base de Regras e Inferência}
+
+O ``cérebro'' do sistema reside na \textbf{Base de Regras}, que consiste em um conjunto de sentenças linguísticas no formato \textbf{SE} (antecedente) \textbf{ENTÃO} (consequente). Estas regras modelam o conhecimento heurístico sobre a gravidade das falhas em APIs. O processo de inferência utiliza operadores lógicos para combinar os antecedentes:
+
+\begin{itemize}
+    \item \textbf{Operador AND (E):} Geralmente calculado como o \textit{mínimo} entre os graus de pertinência dos antecedentes.
+    \item \textbf{Operador OR (OU):} Geralmente calculado como o \textit{máximo} entre os graus de pertinência.
+\end{itemize}
+
+Para este trabalho, foram codificadas \textbf{11 regras de inferência}. As regras fundamentais incluem:
+
+\begin{enumerate}
+    \item \textit{SE} o desvio de \textit{status} é \textbf{alto} \textit{OU} o tempo de resposta é \textbf{timeout}, \textit{ENTÃO} a criticidade é \textbf{alta}.
+    \item \textit{SE} o desvio é \textbf{médio} \textit{E} o tempo é \textbf{lento}, \textit{ENTÃO} a criticidade é \textbf{média}.
+    \item \textit{SE} o \textit{payload} é \textbf{grande} \textit{E} o \textit{status} é documentado, \textit{ENTÃO} a criticidade é \textbf{média} (indicando potencial vazamento de dados).
+\end{enumerate}
+
+\subsection{Desfuzzificação}
+
+A etapa final é a \textbf{desfuzzificação}, que converte o conjunto difuso resultante da combinação das regras de volta para um valor numérico único (\textit{crisp}). O método utilizado nesta implementação é o \textbf{Centro de Massa} (\textit{Centroid}), que calcula o ponto de equilíbrio da área resultante das funções de pertinência ativadas.
+
+O resultado é um \textbf{Score de Anomalia} variando de 0.0 a 1.0, que é então mapeado para categorias discretas de severidade para facilitar a interpretação pelo desenvolvedor:
+
+\begin{itemize}
+    \item \textbf{LOW} (Baixa): Score $< 0.33$
+    \item \textbf{MEDIUM} (Média): $0.33 \leq$ Score $< 0.66$
+    \item \textbf{HIGH} (Alta): Score $\geq 0.66$
+\end{itemize}
