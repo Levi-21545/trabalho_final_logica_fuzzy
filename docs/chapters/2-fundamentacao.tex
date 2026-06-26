@@ -11,7 +11,39 @@ Diferente da lógica binária, um \textbf{conjunto difuso} $A$ em um universo de
     \item \textbf{Função Trapezoidal} (\texttt{trapmf}): Definida por quatro parâmetros $[a,b,c,d]$, possuindo um platô de pertinência máxima entre os pontos $b$ e $c$. É útil para representar intervalos de valores que são considerados plenamente membros do conjunto.
 \end{itemize}
 
-No projeto desenvolvido, estas funções são implementadas via biblioteca \textit{scikit-fuzzy} para caracterizar as variáveis de entrada, como o desvio de contrato e a latência.
+No projeto desenvolvido, estas funções são implementadas via biblioteca \textit{scikit-fuzzy} para caracterizar as variáveis de entrada. O Código~\ref{lst:mfs} apresenta a definição completa das funções de pertinência e das regras de inferência implementadas na classe \texttt{FuzzyEngine}.
+
+\begin{lstlisting}[caption=Funções de pertinência e regras do FIS (\texttt{fuzzy\_engine.py}), label=lst:mfs]
+dev["low"]    = fuzz.trapmf(dev.universe, [0, 0, 0.2, 0.4])
+dev["medium"] = fuzz.trimf(dev.universe, [0.2, 0.5, 0.8])
+dev["high"]   = fuzz.trapmf(dev.universe, [0.6, 0.8, 1, 1])
+
+rtime["normal"]  = fuzz.trapmf(rtime.universe, [0, 0, 200, 500])
+rtime["slow"]    = fuzz.trimf(rtime.universe, [200, 800, 2000])
+rtime["timeout"] = fuzz.trapmf(rtime.universe, [1000, 2500, 5000, 5000])
+
+psize["expected"] = fuzz.trapmf(psize.universe, [0, 0, 0.5, 1.5])
+psize["large"]    = fuzz.trimf(psize.universe, [1, 2, 3])
+psize["empty"]    = fuzz.trimf(psize.universe, [0, 0, 0.3])
+
+ascore["low"]    = fuzz.trapmf(ascore.universe, [0, 0, 0.2, 0.4])
+ascore["medium"] = fuzz.trimf(ascore.universe, [0.25, 0.5, 0.75])
+ascore["high"]   = fuzz.trapmf(ascore.universe, [0.6, 0.8, 1, 1])
+
+rules = [
+    ctrl.Rule(dev["high"] | rtime["timeout"], ascore["high"]),
+    ctrl.Rule(dev["medium"] & rtime["slow"], ascore["medium"]),
+    ctrl.Rule(dev["low"] & rtime["normal"]
+              & psize["expected"], ascore["low"]),
+    ctrl.Rule(dev["medium"] & rtime["normal"]
+              & psize["large"], ascore["medium"]),
+    ctrl.Rule(dev["low"] & psize["empty"], ascore["medium"]),
+    ctrl.Rule(dev["high"], ascore["high"]),
+    ctrl.Rule(psize["large"] & rtime["timeout"], ascore["high"]),
+    ctrl.Rule(dev["low"] & psize["large"], ascore["medium"]),
+    ctrl.Rule(dev["low"] & rtime["slow"], ascore["medium"]),
+]
+\end{lstlisting}
 
 \subsection{Fuzzificação}
 

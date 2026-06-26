@@ -6,7 +6,9 @@ Abordagens \textbf{binárias} tradicionais, baseadas puramente em lógica boolea
 
 \subsection{Problema de Pesquisa}
 
-Um contrato OpenAPI especifica formalmente os códigos de \textit{status} e os esquemas de resposta esperados para cada \textit{endpoint}. Durante a execução de testes de \textit{fuzzing}, a API pode retornar respostas que desviam do contrato de formas sutis, como códigos 400 não documentados, respostas 200 que violam o esquema estrutural, ou erros 500 intermitentes acompanhados de tempos de resposta anômalos. Classificadores booleanos rígidos tendem a agrupar todas essas ocorrências sob um mesmo rótulo de ``falha'', o que dificulta a priorização de correções por parte das equipes de desenvolvimento. O problema reside, portanto, em \textbf{como ranquear essas anomalias por sua criticidade real}, distinguindo de forma inteligente entre um erro de validação esperado e uma falha grave, como vazamento de dados ou colapso do servidor.
+Um contrato OpenAPI especifica formalmente os códigos de \textit{status} e os esquemas de resposta esperados para cada \textit{endpoint}. Durante a execução de testes de \textit{fuzzing}, a API pode retornar respostas que desviam do contrato de formas sutis, como códigos 400 não documentados, respostas 200 que violam o esquema estrutural, ou erros 500 intermitentes acompanhados de tempos de resposta anômalos. Classificadores booleanos rígidos tendem a agrupar todas essas ocorrências sob um mesmo rótulo de ``falha'', o que dificulta a priorização de correções por parte das equipes de desenvolvimento.
+
+O problema reside, portanto, em \textbf{como ranquear essas anomalias por sua criticidade real}, distinguindo de forma inteligente entre um erro de validação esperado e uma falha grave, como vazamento de dados ou colapso do servidor.
 
 \subsection{Pergunta de Pesquisa}
 
@@ -37,4 +39,14 @@ Este trabalho delimita-se à \textbf{camada de inteligência} do processo de \te
 
 \subsection{Estrutura do Trabalho}
 
-Este artigo está organizado em seis seções principais além desta introdução. A Seção 2 apresenta a fundamentação teórica sobre Lógica Fuzzy, detalhando conceitos de conjuntos difusos, funções de pertinência e o modelo de inferência Mamdani. A Seção 3 discute trabalhos relacionados, comparando esta abordagem com ferramentas de teste de API como \textit{Schemathesis} e \textit{Dredd}. A Seção 4 detalha a metodologia, descrevendo a arquitetura do FIS, as variáveis de entrada e as 11 regras de inferência implementadas. A Seção 5 apresenta e discute os resultados obtidos nos testes contra a \textit{crAPI}, incluindo a distribuição de severidades e a análise de casos representativos. Por fim, a Seção 6 traz as conclusões do estudo, respondendo à pergunta de pesquisa e sugerindo direções para trabalhos futuros.
+Este artigo está organizado em seis seções principais além desta introdução.
+
+A Seção 2 apresenta a fundamentação teórica sobre Lógica Fuzzy, detalhando conceitos de conjuntos difusos, funções de pertinência e o modelo de inferência Mamdani.
+
+A Seção 3 discute trabalhos relacionados, comparando esta abordagem com ferramentas de teste de API como \textit{Schemathesis} e \textit{Dredd}.
+
+A Seção 4 detalha a metodologia, descrevendo a arquitetura do FIS, as variáveis de entrada e as 11 regras de inferência implementadas.
+
+A Seção 5 apresenta e discute os resultados obtidos nos testes contra a \textit{crAPI}, incluindo a distribuição de severidades e a análise de casos representativos.
+
+Por fim, a Seção 6 traz as conclusões do estudo, respondendo à pergunta de pesquisa e sugerindo direções para trabalhos futuros.
