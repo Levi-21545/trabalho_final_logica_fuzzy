@@ -4,7 +4,7 @@ Este trabalho apresentou o desenvolvimento e a avaliação de um Sistema de Infe
 
 \subsection{Resposta à Pergunta de Pesquisa}
 
-Os resultados experimentais confirmam a hipótese de pesquisa: o uso de \textbf{Lógica Fuzzy} permite classificar anomalias de robustez com uma granularidade significativamente superior às abordagens booleanas tradicionais. Enquanto um classificador binário rotularia todos os 207 desvios detectados na crAPI como ``falhas'' genéricas, o motor \textit{fuzzy} foi capaz de isolar apenas \textbf{42 ocorrências (20,3\%)} como de alta severidade, permitindo uma priorização imediata de erros críticos de servidor (5xx) e latências extremas.
+Os resultados experimentais confirmam a hipótese de pesquisa: o uso de \textbf{Lógica Fuzzy} permite classificar anomalias de robustez com uma granularidade significativamente superior às abordagens booleanas tradicionais. Enquanto um classificador binário rotularia todos os 207 desvios detectados na crAPI \cite{crapi} como ``falhas'' genéricas, o motor \textit{fuzzy} foi capaz de isolar apenas \textbf{42 ocorrências (20,3\%)} como de alta severidade, permitindo uma priorização imediata de erros críticos de servidor (5xx) e latências extremas.
 
 A combinação das três variáveis --- desvio de \textit{status}, tempo de resposta e razão de \textit{payload} --- provou ser eficaz para capturar contextos que variáveis isoladas ignorariam, como falhas de validação de entrada que retornam \textit{status} de sucesso, mas com respostas volumosas e lentas.
 

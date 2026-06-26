@@ -4,7 +4,7 @@ Nesta seção, são apresentados e discutidos os resultados obtidos na validaç�
 
 \subsection{Visão Geral dos Resultados}
 
-A execução de referência utilizada para esta análise (identificada pelo diretório de saída \texttt{output/20260626\_105901}) submeteu a API crAPI a um regime de testes de nível 1 (mutações unitárias), com um limite de até 10 mutações por \textit{endpoint}. Ao longo do processo, o sistema identificou um total de \textbf{207 anomalias}, geradas a partir de requisições que provocaram algum nível de desvio em relação ao contrato OpenAPI ou ao comportamento de rede esperado. Os dados foram processados pelo motor \textit{fuzzy} em tempo real, resultando em um relatório consolidado que detalha tanto o tipo técnico da falha quanto o seu impacto estimado através do \textbf{Anomaly Score}.
+A execução de referência utilizada para esta análise (identificada pelo diretório de saída \texttt{output/20260626\_105901}) submeteu a API crAPI \cite{crapi} a um regime de testes de nível 1 (mutações unitárias), com um limite de até 10 mutações por \textit{endpoint}. Ao longo do processo, o sistema identificou um total de \textbf{207 anomalias}, geradas a partir de requisições que provocaram algum nível de desvio em relação ao contrato OpenAPI \cite{openapi} ou ao comportamento de rede esperado. Os dados foram processados pelo motor \textit{fuzzy} em tempo real, resultando em um relatório consolidado que detalha tanto o tipo técnico da falha quanto o seu impacto estimado através do \textbf{Anomaly Score}.
 
 \subsection{Distribuição por Classificação das Anomalias}
 

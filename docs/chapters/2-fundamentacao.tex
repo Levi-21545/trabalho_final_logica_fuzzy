@@ -11,7 +11,7 @@ Diferente da lógica binária, um \textbf{conjunto difuso} $A$ em um universo de
     \item \textbf{Função Trapezoidal} (\texttt{trapmf}): Definida por quatro parâmetros $[a,b,c,d]$, possuindo um platô de pertinência máxima entre os pontos $b$ e $c$. É útil para representar intervalos de valores que são considerados plenamente membros do conjunto.
 \end{itemize}
 
-No projeto desenvolvido, estas funções são implementadas via biblioteca \textit{scikit-fuzzy} para caracterizar as variáveis de entrada. O Código~\ref{lst:mfs} apresenta a definição completa das funções de pertinência e das regras de inferência implementadas na classe \texttt{FuzzyEngine}.
+No projeto desenvolvido, estas funções são implementadas via biblioteca \textit{scikit-fuzzy} \cite{scikitfuzzy} para caracterizar as variáveis de entrada. O Código~\ref{lst:mfs} apresenta a definição completa das funções de pertinência e das regras de inferência implementadas na classe \texttt{FuzzyEngine}.
 
 \begin{lstlisting}[caption=Funções de pertinência e regras do FIS (\texttt{fuzzy\_engine.py}), label=lst:mfs]
 dev["low"]    = fuzz.trapmf(dev.universe, [0, 0, 0.2, 0.4])

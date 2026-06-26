@@ -4,7 +4,7 @@ Esta seção detalha os métodos, ferramentas e etapas aplicados para a constru�
 
 \subsection{Arquitetura do Sistema de Inferência Fuzzy (FIS)}
 
-O sistema foi projetado para atuar como a \textbf{camada de inteligência} (analisador) do projeto \textit{OpenAPI Contract Fuzzer}. A arquitetura baseia-se em um modelo de inferência de \textbf{Mamdani}, implementado em Python com a biblioteca \textit{scikit-fuzzy}. O fluxo de dados consiste na captura de resultados de requisições (\texttt{results.json}), seguida pela fuzzificação de três variáveis de entrada e, finalmente, a geração de um \textbf{score de anomalia} por meio de \textbf{11 regras de inferência}.
+O sistema foi projetado para atuar como a \textbf{camada de inteligência} (analisador) do projeto \textit{OpenAPI Contract Fuzzer}. A arquitetura baseia-se em um modelo de inferência de \textbf{Mamdani}, implementado em Python com a biblioteca \textit{scikit-fuzzy} \cite{scikitfuzzy}. O fluxo de dados consiste na captura de resultados de requisições (\texttt{results.json}), seguida pela fuzzificação de três variáveis de entrada e, finalmente, a geração de um \textbf{score de anomalia} por meio de \textbf{11 regras de inferência}.
 
 As variáveis que compõem o universo de discurso do FIS são apresentadas na Tabela~\ref{tab:variaveis}.
 
@@ -123,7 +123,7 @@ O Sistema de Inferência Fuzzy (FIS) é aplicado \textbf{após} essa classifica�
 
 \subsection{Ambiente de Experimentação}
 
-Os experimentos foram conduzidos em uma estação de trabalho MacBook Air (16GB RAM) utilizando a linguagem Python 3.13. A API alvo escolhida foi a \textbf{crAPI} (\textit{Completely Ridiculous API}), um ambiente propositalmente vulnerável que expõe aproximadamente 60 \textit{endpoints} distribuídos em domínios de identidade, mecânica e comunidade.
+Os experimentos foram conduzidos em uma estação de trabalho MacBook Air (16GB RAM) utilizando a linguagem Python 3.13. A API alvo escolhida foi a \textbf{crAPI} (\textit{Completely Ridiculous API}) \cite{crapi}, um ambiente propositalmente vulnerável que expõe aproximadamente 60 \textit{endpoints} distribuídos em domínios de identidade, mecânica e comunidade.
 
 Para a execução de referência, foram adotados os seguintes parâmetros:
 
