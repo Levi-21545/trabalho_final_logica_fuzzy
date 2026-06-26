@@ -1,4 +1,13 @@
 \section{Trabalhos Relacionados}
 
-[DIRECIONAMENTO] Citar ferramentas de fuzzing de API como Schemathesis (gera casos de teste a partir de schemas OpenAPI) e Dredd (validação de contratos). Mencionar que ambas usam oráculos determinísticos (status code, schema validation). Comparar com abordagens que usam IA para detecção de anomalias (ex: redes neurais para classificação de falhas, se houver na literatura). Destacar o diferencial do trabalho: uso de lógica fuzzy como oráculo graduado, capturando falsos positivos que as ferramentas tradicionais não filtram. Limitar a 1 parágrafo por ferramenta/estudo.
-\endinput
+A literatura sobre testes automatizados de APIs REST apresenta diversas ferramentas que utilizam contratos OpenAPI para guiar a geração de casos de teste. Entretanto, a maioria dessas soluções foca na \textbf{detecção binária} de falhas, sem oferecer uma gradação de severidade baseada em múltiplas variáveis como o sistema proposto.
+
+Uma das ferramentas mais utilizadas na indústria é o \textbf{Schemathesis}, que emprega \textit{fuzzing} baseado em propriedades (hipóteses) para gerar \textit{payloads} que validam a conformidade dos \textit{endpoints}. Embora seja extremamente eficaz na geração estatística de dados, o Schemathesis utiliza um oráculo de teste puramente booleano: a resposta é classificada como falha se violar o contrato ou retornar um erro 5xx, sem realizar um ranqueamento de criticidade entre diferentes anomalias detectadas.
+
+De forma semelhante, o \textbf{Dredd} é uma ferramenta focada em validar se a implementação da API condiz com sua documentação. Ele executa requisições e compara os esquemas de resposta, mas sua análise limita-se à \textbf{validação estrutural} (\textit{JSON Schema}), carecendo de heurísticas para identificar comportamentos anômalos de rede ou desempenho que não constituam uma quebra direta de contrato.
+
+No campo acadêmico, Arcuri et al. (2026) apresentam o \textbf{Tornado}, uma ferramenta voltada para a geração automática de oráculos de teste para APIs REST. O Tornado utiliza heurísticas para determinar o código de \textit{status} esperado, mas, assim como as ferramentas industriais, baseia-se em decisões discretas.
+
+Não foram encontrados trabalhos que integrem o \textit{fuzzing} sintático-semântico à Lógica Fuzzy para tratar a incerteza e a gradação das respostas, o que caracteriza a originalidade desta proposta.
+
+A aplicação de \textbf{Sistemas de Inferência Fuzzy (FIS)} em testes de software é geralmente voltada para a \textit{priorização} de casos de teste em suítes de regressão, e não para a classificação automatizada do oráculo de execução em tempo real. Portanto, este trabalho preenche uma lacuna ao utilizar a inteligência difusa para transformar o contrato OpenAPI de um documento passivo em um \textbf{oráculo ativo} capaz de ranquear anomalias por sua relevância prática.

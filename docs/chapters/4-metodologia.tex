@@ -1,4 +1,82 @@
 \section{Metodologia}
 
-[DIRECIONAMENTO] Descrever a arquitetura do FIS proposto. Definir as variáveis de entrada fuzzy: Desvio do Status Code (domínio [0,1] — quão distante do esperado), Tempo de Resposta (domínio [0, 5000ms] — normal, lento, timeout), Tamanho do Payload (domínio $[0, \infty]$ — esperado, grande, vazio). Definir a variável de saída: Criticidade da Anomalia (domínio [0,1] — baixa, média, alta). Apresentar as funções de pertinência de cada variável (triangulares/trapezoidais) e justificar as escolhas. Listar a base de regras SE-ENTÃO (ex: SE status é "erro grave" E tempo é "lento" ENTÃO criticidade é "alta"). Descrever o ambiente de experimentação: biblioteca scikit-fuzzy (Python), consumo dos arquivos results.json gerados pelo fuzzer, critérios de validação (comparação com analisador binário original).
-\endinput
+Esta seção detalha os métodos, ferramentas e etapas aplicados para a construção do oráculo de teste inteligente. A pesquisa caracteriza-se como aplicada e experimental, utilizando o \textit{fuzzer} de contrato desenvolvido para coletar dados brutos que alimentam o motor de lógica fuzzy. O foco da metodologia reside na transformação de métricas de execução de APIs em indicadores de severidade quantificáveis.
+
+\subsection{Arquitetura do Sistema de Inferência Fuzzy (FIS)}
+
+O sistema foi projetado para atuar como a \textbf{camada de inteligência} (analisador) do projeto \textit{OpenAPI Contract Fuzzer}. A arquitetura baseia-se em um modelo de inferência de \textbf{Mamdani}, implementado em Python com a biblioteca \textit{scikit-fuzzy}. O fluxo de dados consiste na captura de resultados de requisições (\texttt{results.json}), seguida pela fuzzificação de três variáveis de entrada e, finalmente, a geração de um \textbf{score de anomalia} por meio de \textbf{11 regras de inferência}.
+
+As variáveis que compõem o universo de discurso do FIS são apresentadas na Tabela~\ref{tab:variaveis}.
+
+\begin{table}[H]
+\centering
+\caption{Variáveis de entrada do FIS}
+\label{tab:variaveis}
+\footnotesize
+\begin{tabular}{@{}lllp{6.5cm}@{}}
+\hline
+\textbf{Variável} & \textbf{Universo} & \textbf{Conjuntos} & \textbf{Descrição} \\
+\hline
+status\_deviation & $[0.0, 1.0]$ & low, medium, high & Desvio do código retornado \textit{vs.} contrato \\
+response\_time & $[0, 5000]$~ms & normal, slow, timeout & Tempo de latência da requisição \\
+payload\_ratio & $[0.0, 3.0]$ & expected, large, empty & Proporção do tamanho do corpo da resposta \\
+\hline
+\end{tabular}
+\end{table}
+
+A variável de saída, \texttt{anomaly\_score}, opera no intervalo $[0.0, 1.0]$ e é mapeada para as categorias de severidade \textbf{LOW}, \textbf{MEDIUM} e \textbf{HIGH}.
+
+\subsection{Cálculo do Desvio de Status Code}
+
+O desvio de \textit{status} é a variável primária para identificar falhas de conformidade de contrato. A lógica de cálculo penaliza códigos de erro não previstos na documentação OpenAPI.
+
+\begin{itemize}
+    \item \textbf{Desvio 0.0:} Atribuído quando o código retornado está explicitamente documentado no contrato para o \textit{endpoint} testado.
+    \item \textbf{Desvio 0.6:} Atribuído a códigos da família 4xx não documentados. Representam comportamentos não especificados, mas que indicam que a API tratou a entrada, embora não tenha formalizado o erro.
+    \item \textbf{Desvio 1.0:} Atribuído a erros internos do servidor (5xx) ou ausência de resposta (erros de rede). Estes casos indicam falhas críticas de robustez.
+\end{itemize}
+
+\subsection{Cálculo do Payload Ratio}
+
+A variável \textbf{Payload Ratio} avalia anomalias na estrutura dos dados retornados. Um desvio significativo no tamanho do corpo da resposta, especialmente em cenários de erro, pode indicar \textbf{vazamentos de informações sensíveis} ou a exibição indevida de \textit{logs} internos de depuração (\textit{stack traces}).
+
+O cálculo normaliza o tamanho da resposta em relação a uma linha de base esperada. Para aumentar a precisão da detecção de riscos, o peso desta variável é \textbf{dobrado} quando o código de \textit{status} retornado também é um desvio do contrato, permitindo que as regras de inferência elevem o score de anomalia para o nível \textbf{HIGH} em casos de respostas volumosas não documentadas.
+
+\subsection{Geração de Payloads Mutantes}
+
+A eficácia do sistema de análise depende da qualidade dos dados gerados pelo motor de mutação. O \textit{fuzzer} utiliza o contrato OpenAPI para criar um \textit{payload} de referência (\textit{baseline}) que respeita todos os tipos e restrições. A partir deste \textit{baseline}, o motor de mutação (\texttt{engine.py}) aplica transformações em diferentes níveis:
+
+\begin{itemize}
+    \item \textbf{Level 0:} Envio do \textit{payload baseline} para validação de conformidade básica.
+    \item \textbf{Level 1 (Mutações Unitárias):} Aplica uma única mutação por campo, focando em violações de tipo (ex: enviar \textit{string} em campo numérico), extrapolação de limites (\texttt{minLength}, \texttt{maximum}) e injeção de caracteres especiais.
+    \item \textbf{Level 2 (Mutações Combinadas):} Realiza múltiplas mutações em campos distintos simultaneamente, permitindo identificar falhas decorrentes da interação entre parâmetros.
+\end{itemize}
+
+\subsection{Auto-Auth e Auth Probes}
+
+Para garantir a cobertura de \textit{endpoints} protegidos, o sistema implementa o módulo \textbf{Auto-Auth}, que automatiza a descoberta de fluxos de registro e login no contrato, extraindo \textit{tokens} JWT para injetar o cabeçalho \texttt{Authorization} nas requisições subsequentes. Complementarmente, são executadas \textbf{Auth Probes} antes de qualquer mutação. Para cada \textit{endpoint} autenticado, o \textit{fuzzer} envia duas requisições de controle:
+
+\begin{enumerate}
+    \item Sem \textit{token} de autenticação.
+    \item Com um \textit{token} inválido (\texttt{Authorization: Bearer invalid\_token}).
+\end{enumerate}
+
+O resultado dessas \textit{probes} é fundamental para o analisador classificar se a API possui um controle de acesso robusto ou se apresenta uma \textbf{contradição de erro} (\texttt{ERROR\_CONTRADICTION}) ao não rejeitar acessos indevidos conforme o contrato.
+
+\subsection{Classificador Binário (Anomaly Types)}
+
+Antes da aplicação da inteligência difusa, cada resposta é submetida a um classificador binário discreto. Este módulo categoriza o resultado em tipos específicos, como \texttt{SERVER\_ERROR} (5xx), \texttt{UNEXPECTED\_SUCCESS} (sucesso onde se esperava erro) e \texttt{ERROR\_CONTRADICTION} (erro que viola o esquema do contrato).
+
+O Sistema de Inferência Fuzzy (FIS) é aplicado \textbf{após} essa classificação inicial. Enquanto o classificador binário define a natureza do problema, o FIS atribui o score de severidade e o ranqueamento, permitindo que falhas de um mesmo tipo sejam priorizadas de acordo com sua ``nebulosidade'' (ex: um erro 500 lento \textit{vs.} um erro 500 rápido).
+
+\subsection{Ambiente de Experimentação}
+
+Os experimentos foram conduzidos em uma estação de trabalho MacBook Air (16GB RAM) utilizando a linguagem Python 3.13. A API alvo escolhida foi a \textbf{crAPI} (\textit{Completely Ridiculous API}), um ambiente propositalmente vulnerável que expõe aproximadamente 60 \textit{endpoints} distribuídos em domínios de identidade, mecânica e comunidade.
+
+Para a execução de referência, foram adotados os seguintes parâmetros:
+
+\begin{itemize}
+    \item \textbf{Nível de Fuzzing:} Level 2 (mutações combinadas).
+    \item \textbf{Limites:} Máximo de 10 mutações por \textit{endpoint}.
+    \item \textbf{Políticas de Rede:} \textit{Delay} de 100~ms entre requisições para evitar negação de serviço acidental e \textit{timeout} de 15 segundos por chamada HTTP.
+\end{itemize}
