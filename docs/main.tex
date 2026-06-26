@@ -6,7 +6,21 @@
 \usepackage{graphicx,url}
 \usepackage{dirtree}
 \usepackage{float}
-
+\usepackage{xcolor}
+\usepackage{listings}
+\lstset{
+  language=Python,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  numbers=left,
+  numberstyle=\tiny,
+  frame=single,
+  breaklines=true,
+  tabsize=2,
+  captionpos=b,
+}
 
 \sloppy
 
@@ -22,11 +36,11 @@
 \maketitle
 
 \begin{resumo}
-[DIRECIONAMENTO] Resumir em 10-15 linhas: contexto (APIs REST e teste de robustez), problema (oráculo binário insuficiente), solução proposta (FIS com scikit-fuzzy usando desvio de status, tempo de resposta e tamanho do payload como entradas), metodologia (validação com dados reais de fuzzer), principais resultados (redução de falsos positivos) e conclusão.
+A classificação de anomalias em testes de APIs REST enfrenta o desafio persistente do oráculo de teste, especificamente na distinção entre falhas de implementação e comportamentos esperados sob condições de estresse. Este trabalho apresenta a implementação de um Sistema de Inferência Fuzzy (FIS) integrado a uma ferramenta de fuzzing guiada por contrato para automatizar essa triagem de forma inteligente. O sistema utiliza três variáveis difusas — desvio de status code, tempo de resposta e tamanho do payload — para calcular um score de criticidade contínuo entre 0.0 e 1.0. Implementada em Python com a biblioteca scikit-fuzzy, a solução foi validada contra a aplicação vulnerável crAPI. Os resultados revelaram 207 anomalias, das quais apenas 42 foram classificadas como de alta severidade pelo motor fuzzy, demonstrando maior precisão e granularidade na priorização de falhas em relação a abordagens binárias tradicionais. A metodologia mostra-se promissora para integração em pipelines de CI/CD, otimizando o ciclo de desenvolvimento de software robusto.
 \end{resumo}
 
 \begin{abstract}
-[DIRECIONAMENTO] Tradução do resumo para o inglês, mantendo a mesma estrutura (context, problem, solution, methodology, results, conclusion).
+Anomaly classification in REST API testing faces the persistent challenge of the test oracle, specifically in distinguishing between implementation failures and expected behaviors under stress conditions. This paper presents the implementation of a Fuzzy Inference System (FIS) integrated with a contract-guided fuzzing tool to automate this triage intelligently. The system employs three fuzzy variables — status code deviation, response time, and payload size — to calculate a continuous criticality score between 0.0 and 1.0. Implemented in Python using the scikit-fuzzy library, the solution was validated against the crAPI vulnerable application. Results revealed 207 anomalies, of which only 42 were classified as high severity by the fuzzy engine, demonstrating greater precision and granularity in prioritizing failures compared to traditional binary approaches. The methodology proves promising for integration into CI/CD pipelines, optimizing the development cycle of robust software.
 \end{abstract}
 
 \input{chapters/1-introducao}
@@ -37,9 +51,9 @@
 
 \input{chapters/4-metodologia}
 
-% \input{chapters/6-resultados}
+\input{chapters/5-resultados}
 
-% \input{chapters/7-conclusao}
+\input{chapters/6-conclusao}
 
 \bibliographystyle{bibliography/sbc}
 \bibliography{bibliography/sbc-template}

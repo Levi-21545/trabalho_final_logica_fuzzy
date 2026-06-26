@@ -1,0 +1,35 @@
+\section{Conclusão}
+
+Este trabalho apresentou o desenvolvimento e a avaliação de um Sistema de Inferência Fuzzy (FIS) integrado a uma ferramenta de \textit{fuzzing} guiado por contrato para a classificação inteligente de anomalias em APIs REST. A abordagem visou superar as limitações dos oráculos de teste binários, que frequentemente falham em capturar a nuance e a incerteza de comportamentos anômalos em ambientes de rede complexos.
+
+\subsection{Resposta à Pergunta de Pesquisa}
+
+Os resultados experimentais confirmam a hipótese de pesquisa: o uso de \textbf{Lógica Fuzzy} permite classificar anomalias de robustez com uma granularidade significativamente superior às abordagens booleanas tradicionais. Enquanto um classificador binário rotularia todos os 207 desvios detectados na crAPI como ``falhas'' genéricas, o motor \textit{fuzzy} foi capaz de isolar apenas \textbf{42 ocorrências (20,3\%)} como de alta severidade, permitindo uma priorização imediata de erros críticos de servidor (5xx) e latências extremas.
+
+A combinação das três variáveis --- desvio de \textit{status}, tempo de resposta e razão de \textit{payload} --- provou ser eficaz para capturar contextos que variáveis isoladas ignorariam, como falhas de validação de entrada que retornam \textit{status} de sucesso, mas com respostas volumosas e lentas.
+
+\subsection{Contribuições}
+
+As principais contribuições deste estudo incluem:
+
+\begin{itemize}
+    \item A implementação de um dos \textbf{primeiros Sistemas de Inferência Fuzzy} aplicados especificamente como oráculo de teste para \textit{fuzzing} de APIs REST.
+    \item A definição de um conjunto de \textbf{11 regras de inferência} baseadas em heurísticas de engenharia de software para a tradução de comportamentos de rede em scores de risco.
+    \item A disponibilização de uma ferramenta \textit{open-source} integrada ao \textit{OpenAPI Contract Fuzzer}, facilitando a reprodutibilidade por outros pesquisadores.
+    \item A validação empírica detalhada contra a API crAPI, gerando uma base de dados de \textbf{207 anomalias} classificadas e documentadas.
+\end{itemize}
+
+\subsection{Trabalhos Futuros}
+
+Para a evolução desta pesquisa, propõem-se as seguintes frentes:
+
+\begin{enumerate}
+    \item \textbf{Loop Adaptativo com Feedback Fuzzy:} Implementar um sistema de aprendizado onde a confirmação manual de um falso positivo pelo desenvolvedor ajuste automaticamente as funções de pertinência do FIS.
+    \item \textbf{Validação em Larga Escala:} Testar o motor \textit{fuzzy} contra APIs de produção (como GitHub ou Stripe) para avaliar a generalização das regras de inferência em diferentes arquiteturas.
+    \item \textbf{Extração de Novas \textit{Features}:} Incorporar variáveis adicionais como a presença de \textit{stack traces} no corpo da resposta e a contagem de campos retornados \textit{versus} esperados.
+    \item \textbf{Integração CI/CD Nativa:} Desenvolver um \textit{plugin} de automação que utilize o score \textit{fuzzy} para decidir, de forma autônoma, se um \textit{build} deve ser interrompido (ex: apenas para scores $>$ 0.8).
+\end{enumerate}
+
+\subsection{Considerações Finais}
+
+A \textbf{Lógica Fuzzy} demonstrou ser um arcabouço prático, leve e matematicamente rigoroso para lidar com a ``nebulosidade'' inerente ao teste de software moderno. Ao transformar o contrato OpenAPI de um documento estático em um \textbf{oráculo ativo e inteligente}, este trabalho contribui para o aumento da robustez de sistemas distribuídos e para a redução do esforço humano na triagem de falhas de software.

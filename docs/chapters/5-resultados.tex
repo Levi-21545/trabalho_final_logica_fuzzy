@@ -1,0 +1,86 @@
+\section{Resultados e Discussões}
+
+Nesta seção, são apresentados e discutidos os resultados obtidos na validação experimental do sistema. O foco da análise reside na capacidade do motor \textit{fuzzy} em transformar um volume bruto de dados de execução em informações categorizadas por criticidade, permitindo uma interpretação mais clara da robustez da API testada.
+
+\subsection{Visão Geral dos Resultados}
+
+A execução de referência utilizada para esta análise (identificada pelo diretório de saída \texttt{output/20260626\_105901}) submeteu a API crAPI a um regime de testes de nível 1 (mutações unitárias), com um limite de até 10 mutações por \textit{endpoint}. Ao longo do processo, o sistema identificou um total de \textbf{207 anomalias}, geradas a partir de requisições que provocaram algum nível de desvio em relação ao contrato OpenAPI ou ao comportamento de rede esperado. Os dados foram processados pelo motor \textit{fuzzy} em tempo real, resultando em um relatório consolidado que detalha tanto o tipo técnico da falha quanto o seu impacto estimado através do \textbf{Anomaly Score}.
+
+\subsection{Distribuição por Classificação das Anomalias}
+
+Antes da atribuição do score de severidade, as anomalias foram classificadas em tipos discretos de acordo com a natureza do erro. A Tabela~\ref{tab:classificacao} apresenta a distribuição dessas ocorrências.
+
+\begin{table}[H]
+\centering
+\caption{Distribuição das anomalias por classificação}
+\label{tab:classificacao}
+\footnotesize
+\begin{tabular}{lrc}
+\hline
+\textbf{Classificação} & \textbf{Quantidade} & \textbf{(\%)} \\
+\hline
+\texttt{UNEXPECTED\_ERROR\_STATUS} & 103 & 49,8\% \\
+\texttt{SERVER\_ERROR} & 42 & 20,3\% \\
+\texttt{UNEXPECTED\_SUCCESS} & 28 & 13,5\% \\
+\texttt{ERROR\_CONTRADICTION} & 22 & 10,6\% \\
+\texttt{EXPECTED\_FAILURE} & 10 & 4,8\% \\
+\texttt{SUCCESS\_CONTRADICTION} & 2 & 1,0\% \\
+\hline
+\end{tabular}
+\end{table}
+
+A análise qualitativa desses dados revela que a maioria das ocorrências (\texttt{UNEXPECTED\_ERROR\_STATUS}, 49,8\%) refere-se a códigos de \textit{status} 400 (\textit{Bad Request}) que, embora corretos do ponto de vista semântico, não estavam documentados no contrato OpenAPI para os respectivos \textit{endpoints}. As ocorrências de \texttt{SERVER\_ERROR} (20,3\%), por outro lado, representam o ponto mais crítico da análise. \textit{Endpoints} como \texttt{/verify-email-token} e \texttt{/reset-password} falharam catastroficamente ao receber \textit{payloads} mutantes, retornando códigos 500 ou 503. Em um cenário de análise booleana, todos os 207 achados seriam marcados apenas como ``falha'', mas a classificação por tipo já começa a separar o que é ruído de documentação do que é uma quebra real de serviço.
+
+\subsection{Análise da Severidade via Lógica Fuzzy}
+
+A aplicação do Sistema de Inferência Fuzzy (FIS) permitiu refinar os 207 achados em três níveis de severidade, utilizando as funções de pertinência de saída baseadas no \textbf{Anomaly Score} calculado. A Tabela~\ref{tab:severidade} apresenta a distribuição obtida.
+
+\begin{table}[H]
+\centering
+\caption{Distribuição das anomalias por severidade}
+\label{tab:severidade}
+\footnotesize
+\begin{tabular}{lcc}
+\hline
+\textbf{Severidade} & \textbf{Intervalo} & \textbf{Quantidade} \\
+\hline
+\textbf{HIGH} (Alta) & $\geq 0.66$ & 42 \\
+\textbf{MEDIUM} (Média) & $0.33 \leq score < 0.66$ & 120 \\
+\textbf{LOW} (Baixa) & $< 0.33$ & 45 \\
+\hline
+\end{tabular}
+\end{table}
+
+O resultado demonstra o valor prático da inteligência difusa: apenas \textbf{20,3\%} das anomalias detectadas foram classificadas como severidade alta. Esses achados concentraram as maiores pontuações devido à combinação de erros de servidor (5xx) e tempos de resposta elevados, disparando a regra de inferência de criticidade máxima.
+
+As anomalias de severidade \textbf{MEDIUM} representam a maior parte dos resultados (58\%) e consistem principalmente em erros 400 não documentados que não causaram lentidão nem geraram \textit{payloads} excessivamente grandes. Ao isolar as 42 falhas de nível \textbf{HIGH}, o sistema permite que o desenvolvedor concentre seus esforços de correção no subconjunto de problemas que efetivamente compromete a disponibilidade ou a segurança da API, reduzindo a fadiga causada por falsos positivos ou problemas menores de documentação.
+
+\subsection{Análise de Casos}
+
+Para ilustrar o funcionamento do oráculo difuso, foram selecionados quatro casos representativos que demonstram como as variáveis de entrada influenciam o score final de criticidade.
+
+\paragraph{Caso 1 — Erro de Servidor Crítico (score=0.84, HIGH)}
+No \textit{endpoint} \texttt{/verify-email-token}, o envio de uma \textit{string} vazia no campo de \textit{token} resultou em um erro \textbf{500 Internal Server Error}. O motor \textit{fuzzy} calculou um desvio de \textit{status} de 1.0 e identificou um tempo de resposta de aproximadamente 800~ms. A ativação da regra de inferência ``\textit{SE} desvio é \textbf{alto}, \textit{ENTÃO} score é \textbf{alto}'' resultou na severidade máxima, indicando uma falha de robustez onde uma entrada malformada causou uma exceção não tratada no servidor.
+
+\paragraph{Caso 2 — Erro Não Documentado (score=0.6, MEDIUM)}
+Durante o teste do \textit{endpoint} de login, mutações unitárias provocaram erros 400 \textit{Bad Request} que não constavam no contrato OpenAPI. Como a API rejeitou a requisição (comportamento seguro), mas o \textit{status} não estava documentado, o sistema atribuiu um desvio médio de 0.6. Com latência baixa ($\sim$50~ms) e \textit{payload} pequeno, o FIS classificou o achado como severidade média, sinalizando uma necessidade de atualização da documentação (\textit{Contract Drift}) em vez de uma falha de segurança imediata.
+
+\paragraph{Caso 3 — Sucesso Inesperado (score=0.5, MEDIUM)}
+No caso do \textit{endpoint} \texttt{/reset-password}, a API aceitou uma senha excessivamente longa e campos vazios retornando \textit{status} 200 OK. Embora o desvio de \textit{status} tenha sido 0.0 (pois o \textit{status} 200 é documentado), a variável \texttt{payload\_ratio} atingiu um valor de $\sim$1.8 devido ao eco do \textit{payload} gigante na resposta. A regra ``\textit{SE} desvio é \textbf{baixo} \textit{E} \textit{payload} é \textbf{grande}, \textit{ENTÃO} score é \textbf{médio}'' foi ativada, alertando para uma falha de validação de entrada que um classificador booleano ignoraria por ler apenas o código de \textit{status}.
+
+\paragraph{Caso 4 — Contradição de Erro (score=0.31, LOW)}
+Neste cenário, a API retornou um erro 400, mas o corpo da resposta omitiu campos obrigatórios definidos no esquema do contrato. Apesar de ser uma violação contratual, o tempo de resposta rápido e o \textit{payload} reduzido resultaram em um score baixo. O FIS interpretou que, embora haja uma falha de conformidade estrutural, a API cumpriu sua função primordial de rejeitar a entrada inválida.
+
+\subsection{Discussão --- Eficácia do FIS}
+
+A análise dos 207 achados confirma que o Sistema de Inferência Fuzzy (FIS) cumpre o objetivo de prover granularidade ao oráculo de teste. Os principais acertos observados foram a correlação perfeita de scores altos ($\geq$ 0.84) com falhas catastróficas (5xx) e a capacidade de filtrar falsos positivos de baixa prioridade através de scores baixos (0.17 a 0.36).
+
+Entretanto, foram identificadas limitações:
+
+\begin{itemize}
+    \item \textbf{Uniformidade na crAPI:} Devido à ausência generalizada de documentação de erros 400 na API alvo, muitas anomalias ficaram retidas no score médio (0.5 a 0.6). O sistema teve dificuldade em distinguir entre um ``erro 400 inofensivo'' e um ``erro 400 com vazamento de dados'' quando o tamanho do \textit{payload} era similar.
+    \item \textbf{Thresholds:} O limiar de 0.33 para a categoria \textbf{MEDIUM} mostrou-se pouco seletivo, concentrando 58\% das anomalias nesta faixa. Ajustes futuros nas funções de pertinência para um \textit{threshold} de 0.4 poderiam aumentar a seletividade da ferramenta.
+    \item \textbf{Natureza Estática:} O FIS atual não possui um \textit{loop} de retroalimentação; as regras são fixas e não se adaptam conforme o desenvolvedor confirma ou rejeita um falso positivo.
+\end{itemize}
+
+Apesar dessas limitações, o sistema demonstrou ser superior a uma abordagem binária ao permitir que o desenvolvedor concentre sua atenção nos \textbf{20,3\%} de falhas críticas detectadas, em vez de ser sobrecarregado por uma lista exaustiva de desvios contratuais menores.
